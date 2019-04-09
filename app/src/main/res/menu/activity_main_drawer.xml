@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_post"
+            android:icon="@drawable/ic_group_add"
+            android:title="Post" />
+        <item
+            android:id="@+id/nav_getAll"
+            android:icon="@drawable/ic_people"
+            android:title="Get all" />
+        <item
+            android:id="@+id/nav_get"
+            android:icon="@drawable/ic_person"
+            android:title="Get by Id" />
+        <item
+            android:id="@+id/nav_delete"
+            android:icon="@drawable/ic_delete"
+            android:title="Delete by Id" />
+        <item
+            android:id="@+id/nav_update"
+            android:icon="@drawable/ic_update"
+            android:title="Update by Id" />
+    </group>
+
+</menu>
