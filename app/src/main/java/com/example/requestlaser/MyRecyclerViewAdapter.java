@@ -9,6 +9,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.util.List;
 
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.ViewHolder> {
@@ -63,7 +70,28 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
             btn_delete.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(v.getContext(), "You clicked " + idTextView.getText() + " on row number " , Toast.LENGTH_SHORT).show();
+                    RequestQueue queue = Volley.newRequestQueue(v.getContext());
+                    String url = "http://192.168.1.104:3000/player/"+idTextView.getText();
+
+                    StringRequest stringRequest = new StringRequest(Request.Method.DELETE, url,
+                            new Response.Listener<String>() {
+                                @Override
+                                public void onResponse(String response) {
+                                    // Display the first 500 characters of the response string.
+                                    mData.remove(getAdapterPosition());
+                                    idData.remove(getAdapterPosition());
+                                    notifyItemRemoved(getAdapterPosition());
+                                    notifyDataSetChanged();
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Toast.makeText(btn_delete.getContext(), "You clicked " + idTextView.getText() + " on row number " , Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                    queue.add(stringRequest);
+                    //Toast.makeText(v.getContext(), "You clicked " + idTextView.getText() + " on row number " , Toast.LENGTH_SHORT).show();
                 }
             });
 
