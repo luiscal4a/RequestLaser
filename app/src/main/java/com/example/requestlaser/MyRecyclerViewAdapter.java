@@ -1,14 +1,19 @@
 package com.example.requestlaser;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -16,7 +21,13 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAdapter.ViewHolder> {
 
@@ -60,12 +71,14 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
         TextView myTextView;
         TextView idTextView;
         ImageButton btn_delete;
+        ImageButton btn_edit;
 
         ViewHolder(View itemView) {
             super(itemView);
             myTextView = itemView.findViewById(R.id.tvAnimalName);
             idTextView = itemView.findViewById(R.id.idPlayer);
             btn_delete = itemView.findViewById(R.id.btn_delete);
+            btn_edit = itemView.findViewById(R.id.btn_edit);
 
             btn_delete.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -95,6 +108,14 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
                 }
             });
 
+            btn_edit.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showInputDialog(v, idTextView, getAdapterPosition());
+                }
+            });
+
+
             itemView.setOnClickListener(this);
         }
 
@@ -118,5 +139,81 @@ public class MyRecyclerViewAdapter extends RecyclerView.Adapter<MyRecyclerViewAd
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
+    }
+
+    protected void showInputDialog(final View v, final TextView idTextView, final int pos) {
+
+        // get prompts.xml view
+        LayoutInflater layoutInflater = LayoutInflater.from(v.getContext());
+        View promptView = layoutInflater.inflate(R.layout.input_dialog, null);
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(v.getContext());
+        alertDialogBuilder.setView(promptView);
+
+        final EditText editText = (EditText) promptView.findViewById(R.id.edittext);
+        // setup a dialog window
+        alertDialogBuilder.setCancelable(false)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        RequestQueue queue = Volley.newRequestQueue(v.getContext());
+                        String url ="http://192.168.1.104:3000/player/"+idTextView.getText();
+
+                        StringRequest sr = new StringRequest(Request.Method.PUT,url, new Response.Listener<String>() {
+                            @Override
+                            public void onResponse(String response) {
+                                if(!editText.getText().toString().matches("")) {
+                                    mData.remove(pos);
+                                    mData.add(pos, editText.getText().toString());
+                                }
+                                notifyItemChanged(pos);
+                                notifyDataSetChanged();
+                                Toast.makeText(v.getContext(), "All correct" , Toast.LENGTH_SHORT).show();
+                            }
+                        }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                NetworkResponse networkResponse = error.networkResponse;
+                                //myText.setText(error.toString()+" "+networkResponse.statusCode);
+                                try {
+                                    String responseBody = new String(error.networkResponse.data, "utf-8");
+                                    JSONObject data = new JSONObject(responseBody);
+                                    String message = data.getString("message");
+                                    Toast.makeText(v.getContext(), message , Toast.LENGTH_SHORT).show();
+                                } catch (JSONException e) {
+                                    Toast.makeText(v.getContext(), "Flag 1" , Toast.LENGTH_SHORT).show();
+                                } catch (UnsupportedEncodingException errorr) {
+                                    Toast.makeText(v.getContext(), "Flag 2" , Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }){
+                            @Override
+                            protected Map<String,String> getParams(){
+                                Map<String,String> params = new HashMap<String, String>();
+                                if(!editText.getText().toString().matches("")){
+                                    params.put("userName",editText.getText().toString());
+                                }
+                                return params;
+                            }
+
+                            @Override
+                            public Map<String, String> getHeaders() throws AuthFailureError {
+                                Map<String,String> params = new HashMap<String, String>();
+                                params.put("Content-Type","application/x-www-form-urlencoded");
+                                return params;
+                            }
+                        };
+
+                        queue.add(sr);
+                    }
+                })
+                .setNegativeButton("Cancel",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
+
+        // create an alert dialog
+        AlertDialog alert = alertDialogBuilder.create();
+        alert.show();
     }
 }
